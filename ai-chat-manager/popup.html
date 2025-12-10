@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Font Size Controller</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>ChatGPT 글자 크기</h1>
+      <label class="toggle">
+        <input type="checkbox" id="enabled">
+        <span class="slider"></span>
+      </label>
+    </header>
+
+    <div class="controls" id="controls">
+      <!-- 프리셋 버튼 -->
+      <div class="preset-section">
+        <div class="preset-label">빠른 설정</div>
+        <div class="preset-buttons">
+          <button class="preset-btn" id="preset-xsmall">아주작게</button>
+          <button class="preset-btn" id="preset-small">작게</button>
+          <button class="preset-btn" id="preset-large">크게</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 대화 너비 조정 -->
+      <div class="width-section">
+        <div class="control-group">
+          <div class="control-header">
+            <label>대화 영역 너비</label>
+            <span class="value" id="width-value">100%</span>
+          </div>
+          <input type="range" id="chatWidth" min="50" max="100" value="100">
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 세부 조정 -->
+      <div class="detail-section">
+        <div class="detail-label">글자 크기 세부 조정</div>
+
+        <div class="control-group">
+          <div class="control-header">
+            <label>H1 제목</label>
+            <span class="value" id="h1-value">32px</span>
+          </div>
+          <input type="range" id="h1" min="16" max="48" value="32">
+        </div>
+
+        <div class="control-group">
+          <div class="control-header">
+            <label>H2 제목</label>
+            <span class="value" id="h2-value">24px</span>
+          </div>
+          <input type="range" id="h2" min="14" max="40" value="24">
+        </div>
+
+        <div class="control-group">
+          <div class="control-header">
+            <label>H3 제목</label>
+            <span class="value" id="h3-value">20px</span>
+          </div>
+          <input type="range" id="h3" min="12" max="36" value="20">
+        </div>
+
+        <div class="control-group">
+          <div class="control-header">
+            <label>본문 (p)</label>
+            <span class="value" id="p-value">16px</span>
+          </div>
+          <input type="range" id="p" min="10" max="28" value="16">
+        </div>
+
+        <div class="control-group">
+          <div class="control-header">
+            <label>리스트 (li)</label>
+            <span class="value" id="li-value">16px</span>
+          </div>
+          <input type="range" id="li" min="10" max="28" value="16">
+        </div>
+
+        <div class="control-group">
+          <div class="control-header">
+            <label>코드블록 (pre)</label>
+            <span class="value" id="pre-value">14px</span>
+          </div>
+          <input type="range" id="pre" min="10" max="24" value="14">
+        </div>
+
+        <div class="control-group">
+          <div class="control-header">
+            <label>인라인 코드 (code)</label>
+            <span class="value" id="code-value">14px</span>
+          </div>
+          <input type="range" id="code" min="10" max="24" value="14">
+        </div>
+
+        <button class="apply-btn" id="apply">적용</button>
+      </div>
+    </div>
+
+    <div class="disabled-message" id="disabled-message">
+      익스텐션이 비활성화되어 있습니다
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
