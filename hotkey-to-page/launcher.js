@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 매칭되는 단축키 찾기
-    const key = normalizeKey(e.key);
+    const key = normalizeKey(e.key, e.shiftKey);
     const matched = hotkeys.find(h => h.key === key);
 
     if (matched && matched.url) {
@@ -39,10 +39,17 @@ document.addEventListener('DOMContentLoaded', () => {
     save();
   });
 
-  function normalizeKey(key) {
-    if (key === ' ') return 'Space';
-    if (key.length === 1) return key.toUpperCase();
-    return key;
+  function normalizeKey(key, shiftKey) {
+    let normalizedKey;
+    if (key === ' ') normalizedKey = 'Space';
+    else if (key.length === 1) normalizedKey = key.toUpperCase();
+    else normalizedKey = key;
+
+    // Shift 조합 (Shift 키 자체는 제외)
+    if (shiftKey && key !== 'Shift') {
+      return 'Shift+' + normalizedKey;
+    }
+    return normalizedKey;
   }
 
   function save() {
@@ -92,11 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const keyInput = row.querySelector('.key-input');
         keyInput.addEventListener('keydown', (e) => {
           e.preventDefault();
-          const key = normalizeKey(e.key);
+          // Tab, Escape, Shift만 누른 경우는 무시
           if (['Tab', 'Escape'].includes(e.key)) {
             keyInput.blur();
             return;
           }
+          if (e.key === 'Shift') return;
+
+          const key = normalizeKey(e.key, e.shiftKey);
           hotkeys[index].key = key;
           keyInput.value = key;
           save();
