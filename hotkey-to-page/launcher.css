@@ -1,0 +1,185 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #202124;
+  color: #e8eaed;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 600px;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 400;
+  color: #e8eaed;
+  margin-bottom: 40px;
+}
+
+.hotkey-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.hotkey-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #303134;
+  border: 1px solid #5f6368;
+  border-radius: 24px;
+  padding: 8px 16px;
+}
+
+/* 보기 모드 */
+.key-badge {
+  min-width: 36px;
+  height: 36px;
+  background: #8ab4f8;
+  color: #202124;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.display-text {
+  flex: 1;
+  text-align: left;
+  font-size: 14px;
+  color: #e8eaed;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 편집 모드 */
+.key-input {
+  width: 48px;
+  height: 36px;
+  background: #3c4043;
+  border: 1px solid #5f6368;
+  border-radius: 18px;
+  padding: 0 12px;
+  color: #e8eaed;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.key-input:focus {
+  border-color: #8ab4f8;
+}
+
+.edit-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.url-input,
+.desc-input {
+  width: 100%;
+  background: #3c4043;
+  border: 1px solid #5f6368;
+  border-radius: 18px;
+  padding: 8px 16px;
+  color: #e8eaed;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.url-input:focus,
+.desc-input:focus {
+  border-color: #8ab4f8;
+}
+
+.url-input::placeholder,
+.desc-input::placeholder {
+  color: #9aa0a6;
+}
+
+/* 버튼들 */
+.edit-btn,
+.done-btn,
+.delete-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: #9aa0a6;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.edit-btn:hover,
+.done-btn:hover {
+  background: #3c4043;
+  color: #e8eaed;
+}
+
+.done-btn {
+  color: #81c995;
+}
+
+.done-btn:hover {
+  color: #81c995;
+}
+
+.delete-btn:hover {
+  background: #3c4043;
+  color: #f28b82;
+}
+
+.add-btn {
+  width: 48px;
+  height: 48px;
+  background: #303134;
+  border: 1px solid #5f6368;
+  border-radius: 50%;
+  color: #e8eaed;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.add-btn:hover {
+  background: #3c4043;
+  border-color: #8ab4f8;
+}
+
+.empty-hint {
+  color: #9aa0a6;
+  font-size: 14px;
+  padding: 20px;
+}

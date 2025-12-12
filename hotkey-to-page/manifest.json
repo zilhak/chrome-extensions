@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Hotkey to Page",
+  "version": "1.0.0",
+  "description": "단축키로 지정한 웹페이지를 새 탭에서 열기. 북마크 연동 지원.",
+  "permissions": ["storage", "bookmarks"],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "open-launcher": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Q",
+        "mac": "MacCtrl+Shift+Q"
+      },
+      "description": "런처 페이지 새 탭에서 열기"
+    },
+    "open-launcher-current": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+A",
+        "mac": "MacCtrl+Shift+A"
+      },
+      "description": "런처 페이지 현재 탭에서 열기"
+    }
+  }
+}
