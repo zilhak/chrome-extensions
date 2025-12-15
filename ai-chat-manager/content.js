@@ -1,4 +1,4 @@
-const STYLE_ID = 'chatgpt-font-size-controller';
+const STYLE_ID = 'ai-chat-font-controller';
 
 const DEFAULT_SETTINGS = {
   enabled: true,
@@ -12,12 +12,33 @@ const DEFAULT_SETTINGS = {
   code: 12
 };
 
+// 사이트 감지
+function getSiteType() {
+  const host = window.location.hostname;
+  if (host.includes('chatgpt.com') || host.includes('chat.openai.com')) {
+    return 'chatgpt';
+  } else if (host.includes('gemini.google.com')) {
+    return 'gemini';
+  }
+  return 'unknown';
+}
+
 // ChatGPT 대화 영역 셀렉터
-const CHAT_SELECTORS = [
+const CHATGPT_SELECTORS = [
   '[data-message-author-role]',
   '.markdown',
   '.prose',
   '.text-message'
+].join(', ');
+
+// Gemini 대화 영역 셀렉터
+const GEMINI_SELECTORS = [
+  'message-content',
+  '.markdown-main-panel',
+  '.model-response-text',
+  '.response-container-content',
+  '.query-content',
+  '.conversation-container'
 ].join(', ');
 
 function generateCSS(settings) {
@@ -25,52 +46,85 @@ function generateCSS(settings) {
     return '';
   }
 
-  const widthCSS = settings.chatWidth < 100 ? `
-    main .mx-auto {
-      max-width: ${settings.chatWidth}% !important;
-    }
-  ` : `
-    main .mx-auto {
-      max-width: none !important;
-    }
-    main .xl\\:max-w-\\[48rem\\],
-    main .md\\:max-w-3xl,
-    main .lg\\:max-w-\\[40rem\\],
-    main .xl\\:max-w-\\[48rem\\] {
-      max-width: none !important;
-    }
-    [class*="max-w-"] {
-      max-width: none !important;
-    }
-  `;
+  const siteType = getSiteType();
+  let widthCSS = '';
+  let selectors = '';
+
+  if (siteType === 'chatgpt') {
+    selectors = CHATGPT_SELECTORS;
+    widthCSS = settings.chatWidth < 100 ? `
+      main .mx-auto {
+        max-width: ${settings.chatWidth}% !important;
+      }
+    ` : `
+      main .mx-auto {
+        max-width: none !important;
+      }
+      main .xl\\:max-w-\\[48rem\\],
+      main .md\\:max-w-3xl,
+      main .lg\\:max-w-\\[40rem\\],
+      main .xl\\:max-w-\\[48rem\\] {
+        max-width: none !important;
+      }
+      [class*="max-w-"] {
+        max-width: none !important;
+      }
+    `;
+  } else if (siteType === 'gemini') {
+    selectors = GEMINI_SELECTORS;
+    widthCSS = settings.chatWidth < 100 ? `
+      .conversation-container,
+      .chat-window,
+      .response-container {
+        max-width: ${settings.chatWidth}% !important;
+        margin: 0 auto !important;
+      }
+    ` : `
+      .conversation-container,
+      .chat-window,
+      .response-container {
+        max-width: none !important;
+      }
+    `;
+  } else {
+    return '';
+  }
 
   return `
     ${widthCSS}
-    ${CHAT_SELECTORS} h1 {
+    ${selectors} h1 {
       font-size: ${settings.h1}px !important;
+      line-height: 1.3 !important;
     }
-    ${CHAT_SELECTORS} h2 {
+    ${selectors} h2 {
       font-size: ${settings.h2}px !important;
+      line-height: 1.3 !important;
     }
-    ${CHAT_SELECTORS} h3 {
+    ${selectors} h3 {
       font-size: ${settings.h3}px !important;
+      line-height: 1.4 !important;
     }
-    ${CHAT_SELECTORS} p {
+    ${selectors} p {
       font-size: ${settings.p}px !important;
+      line-height: 1.5 !important;
     }
-    ${CHAT_SELECTORS} li {
+    ${selectors} li {
       font-size: ${settings.li}px !important;
+      line-height: 1.5 !important;
     }
-    ${CHAT_SELECTORS} pre,
-    ${CHAT_SELECTORS} pre code {
+    ${selectors} pre,
+    ${selectors} pre code {
       font-size: ${settings.pre}px !important;
+      line-height: 1.4 !important;
     }
-    ${CHAT_SELECTORS} code:not(pre code) {
+    ${selectors} code:not(pre code) {
       font-size: ${settings.code}px !important;
+      line-height: 1.4 !important;
     }
-    ${CHAT_SELECTORS} span,
-    ${CHAT_SELECTORS} div:not([class]) {
+    ${selectors} span,
+    ${selectors} div:not([class]) {
       font-size: ${settings.p}px !important;
+      line-height: 1.5 !important;
     }
   `;
 }

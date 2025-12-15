@@ -1,18 +1,20 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT Font Size Controller",
-  "version": "1.0.0",
-  "description": "ChatGPT 사이트의 글자 크기를 태그별로 조절할 수 있는 익스텐션",
+  "name": "AI Chat Font Controller",
+  "version": "1.1.0",
+  "description": "ChatGPT, Gemini 등 AI 채팅 사이트의 글자 크기를 조절할 수 있는 익스텐션",
   "permissions": ["storage"],
   "host_permissions": [
     "https://chatgpt.com/*",
-    "https://chat.openai.com/*"
+    "https://chat.openai.com/*",
+    "https://gemini.google.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://chatgpt.com/*",
-        "https://chat.openai.com/*"
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"
