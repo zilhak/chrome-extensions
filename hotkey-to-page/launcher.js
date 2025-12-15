@@ -16,11 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 입력 필드에서는 무시
     if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
-    // ESC: 창 닫기
-    if (e.key === 'Escape') {
-      window.close();
-      return;
-    }
 
     // 매칭되는 단축키 찾기
     const key = normalizeKey(e.key, e.shiftKey);
