@@ -43,6 +43,30 @@ body {
   border: 1px solid #5f6368;
   border-radius: 24px;
   padding: 8px 16px;
+  transition: opacity 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.hotkey-row[draggable="true"] {
+  cursor: grab;
+}
+
+.hotkey-row.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.hotkey-row.drop-target {
+  border-color: #8ab4f8;
+  background: #3c4043;
+}
+
+/* 드래그 핸들 */
+.drag-handle {
+  color: #5f6368;
+  font-size: 12px;
+  letter-spacing: -2px;
+  cursor: grab;
+  user-select: none;
 }
 
 /* 보기 모드 */

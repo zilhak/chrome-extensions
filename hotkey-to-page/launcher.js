@@ -1,6 +1,7 @@
 let hotkeys = [];
 let editingIndex = null;
 let deletingIndex = null; // 삭제 확인 중인 인덱스
+let draggedIndex = null; // 드래그 중인 인덱스
 
 // URL 파라미터에서 모드 및 이전 URL 읽기
 const urlParams = new URLSearchParams(window.location.search);
@@ -164,16 +165,57 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
       } else {
-        // 보기 모드
+        // 보기 모드 (드래그 가능)
+        row.draggable = true;
+        row.dataset.index = index;
+
         const displayText = hotkey.description || hotkey.url || '(미설정)';
         const hasMatch = hotkey.matchKeyword ? ' 🔗' : '';
 
         row.innerHTML = `
+          <span class="drag-handle">⋮⋮</span>
           <span class="key-badge">${escapeHtml(hotkey.key) || '?'}</span>
           <span class="display-text">${escapeHtml(displayText)}${hasMatch}</span>
           <button class="edit-btn" data-index="${index}">✎</button>
           <button class="delete-btn" data-index="${index}">×</button>
         `;
+
+        // 드래그 이벤트
+        row.addEventListener('dragstart', (e) => {
+          draggedIndex = index;
+          row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          draggedIndex = null;
+          // 모든 drop-target 클래스 제거
+          document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+        });
+
+        row.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          if (draggedIndex !== null && draggedIndex !== index) {
+            row.classList.add('drop-target');
+          }
+        });
+
+        row.addEventListener('dragleave', () => {
+          row.classList.remove('drop-target');
+        });
+
+        row.addEventListener('drop', (e) => {
+          e.preventDefault();
+          row.classList.remove('drop-target');
+          if (draggedIndex !== null && draggedIndex !== index) {
+            // 순서 변경
+            const item = hotkeys.splice(draggedIndex, 1)[0];
+            hotkeys.splice(index, 0, item);
+            draggedIndex = null;
+            save();
+          }
+        });
 
         // 편집 버튼
         const editBtn = row.querySelector('.edit-btn');
