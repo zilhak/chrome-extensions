@@ -98,6 +98,7 @@ body {
 }
 
 .url-input,
+.match-input,
 .desc-input {
   width: 100%;
   background: #3c4043;
@@ -111,11 +112,13 @@ body {
 }
 
 .url-input:focus,
+.match-input:focus,
 .desc-input:focus {
   border-color: #8ab4f8;
 }
 
 .url-input::placeholder,
+.match-input::placeholder,
 .desc-input::placeholder {
   color: #9aa0a6;
 }
@@ -156,6 +159,15 @@ body {
 .delete-btn:hover {
   background: #3c4043;
   color: #f28b82;
+}
+
+.delete-btn.confirm {
+  width: auto;
+  padding: 0 10px;
+  background: #f28b82;
+  color: #202124;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .add-btn {

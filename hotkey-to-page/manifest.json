@@ -3,7 +3,7 @@
   "name": "Hotkey to Page",
   "version": "1.0.0",
   "description": "단축키로 지정한 웹페이지를 새 탭에서 열기. 북마크 연동 지원.",
-  "permissions": ["storage", "bookmarks"],
+  "permissions": ["storage", "bookmarks", "tabs"],
   "action": {
     "default_icon": {
       "16": "icons/icon16.png",

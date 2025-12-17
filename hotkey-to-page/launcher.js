@@ -1,5 +1,11 @@
 let hotkeys = [];
 let editingIndex = null;
+let deletingIndex = null; // 삭제 확인 중인 인덱스
+
+// URL 파라미터에서 모드 및 이전 URL 읽기
+const urlParams = new URLSearchParams(window.location.search);
+const launcherMode = urlParams.get('mode') || 'new';
+const prevUrl = urlParams.get('prevUrl') ? decodeURIComponent(urlParams.get('prevUrl')) : '';
 
 document.addEventListener('DOMContentLoaded', () => {
   const hotkeyList = document.getElementById('hotkey-list');
@@ -23,13 +29,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (matched && matched.url) {
       e.preventDefault();
-      window.location.href = matched.url;
+
+      // background.js로 메시지 전송
+      chrome.runtime.sendMessage({
+        action: 'navigateOrSwitch',
+        url: matched.url,
+        matchKeyword: matched.matchKeyword || '',
+        mode: launcherMode,
+        prevUrl: prevUrl
+      });
     }
   });
 
   // + 버튼
   addBtn.addEventListener('click', () => {
-    hotkeys.push({ key: '', url: '', description: '' });
+    hotkeys.push({ key: '', url: '', description: '', matchKeyword: '' });
     editingIndex = hotkeys.length - 1;
     save();
   });
@@ -81,6 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
                    value="${escapeHtml(hotkey.url)}"
                    data-index="${index}">
             <input type="text"
+                   class="match-input"
+                   placeholder="동일성 키워드 (선택, 예: https://github.com)"
+                   value="${escapeHtml(hotkey.matchKeyword || '')}"
+                   data-index="${index}">
+            <input type="text"
                    class="desc-input"
                    placeholder="설명 (선택)"
                    value="${escapeHtml(hotkey.description || '')}"
@@ -114,6 +133,13 @@ document.addEventListener('DOMContentLoaded', () => {
           save();
         });
 
+        // 동일성 키워드 입력
+        const matchInput = row.querySelector('.match-input');
+        matchInput.addEventListener('change', (e) => {
+          hotkeys[index].matchKeyword = e.target.value;
+          save();
+        });
+
         // 설명 입력
         const descInput = row.querySelector('.desc-input');
         descInput.addEventListener('change', (e) => {
@@ -129,20 +155,22 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
 
-        // 완료 버튼
+        // 완료 버튼 (mousedown은 blur보다 먼저 발생)
         const doneBtn = row.querySelector('.done-btn');
-        doneBtn.addEventListener('click', () => {
+        doneBtn.addEventListener('mousedown', (e) => {
+          e.preventDefault(); // blur 방지
           editingIndex = null;
-          render();
+          save();
         });
 
       } else {
         // 보기 모드
         const displayText = hotkey.description || hotkey.url || '(미설정)';
+        const hasMatch = hotkey.matchKeyword ? ' 🔗' : '';
 
         row.innerHTML = `
           <span class="key-badge">${escapeHtml(hotkey.key) || '?'}</span>
-          <span class="display-text">${escapeHtml(displayText)}</span>
+          <span class="display-text">${escapeHtml(displayText)}${hasMatch}</span>
           <button class="edit-btn" data-index="${index}">✎</button>
           <button class="delete-btn" data-index="${index}">×</button>
         `;
@@ -155,14 +183,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // 삭제 버튼
+      // 삭제 버튼 (mousedown은 blur보다 먼저 발생)
       const deleteBtn = row.querySelector('.delete-btn');
-      deleteBtn.addEventListener('click', () => {
-        hotkeys.splice(index, 1);
-        if (editingIndex === index) editingIndex = null;
-        else if (editingIndex > index) editingIndex--;
-        save();
-      });
+      const isDeleting = deletingIndex === index;
+
+      if (isDeleting) {
+        // 확인 상태: "ok?" 표시
+        deleteBtn.textContent = 'ok?';
+        deleteBtn.classList.add('confirm');
+        deleteBtn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          hotkeys.splice(index, 1);
+          if (editingIndex === index) editingIndex = null;
+          else if (editingIndex > index) editingIndex--;
+          deletingIndex = null;
+          save();
+        });
+      } else {
+        // 일반 상태: "×" 표시
+        deleteBtn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          deletingIndex = index;
+          render();
+        });
+      }
 
       hotkeyList.appendChild(row);
     });
