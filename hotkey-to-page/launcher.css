@@ -65,15 +65,62 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid #3c4043;
+  flex-shrink: 0;
+}
+
+.zone-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .zone-title {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   color: #9aa0a6;
+}
+
+.zone-title-input {
+  background: #3c4043;
+  border: 1px solid #5f6368;
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #e8eaed;
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  width: 120px;
+}
+
+.zone-title-input:focus {
+  border-color: #8ab4f8;
+}
+
+.zone-edit-btn {
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: #5f6368;
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.zone-header:hover .zone-edit-btn {
+  opacity: 1;
+}
+
+.zone-edit-btn:hover {
+  color: #8ab4f8;
 }
 
 .zone-delete-btn {

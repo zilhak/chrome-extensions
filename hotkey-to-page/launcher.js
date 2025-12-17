@@ -3,6 +3,7 @@ let zones = {}; // { "0-0": { name: "Default", hotkeys: [...] }, ... }
 let editingKey = null; // "zoneId-index" 형태
 let deletingKey = null;
 let draggedItem = null; // { zoneId, index }
+let editingZoneId = null; // 영역 이름 편집 중
 
 // URL 파라미터에서 모드 및 이전 URL 읽기
 const urlParams = new URLSearchParams(window.location.search);
@@ -61,8 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return normalizedKey;
   }
 
+  // 데이터만 저장 (UI 갱신 없음)
   function save() {
-    chrome.storage.sync.set({ zones }, render);
+    chrome.storage.sync.set({ zones });
   }
 
   // 영역이 활성화 가능한지 체크 (인접 영역 존재 여부)
@@ -161,21 +163,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const header = document.createElement('div');
     header.className = 'zone-header';
 
-    const title = document.createElement('span');
-    title.className = 'zone-title';
-    title.textContent = zone.name || (zoneId === '0-0' ? 'Default' : `Zone ${zoneId}`);
-    header.appendChild(title);
+    const isEditingZone = editingZoneId === zoneId;
 
-    // 영역 삭제 버튼 (Default 제외, 의존 영역 없을 때만)
-    if (canDeleteZone(x, y)) {
-      const deleteZoneBtn = document.createElement('button');
-      deleteZoneBtn.className = 'zone-delete-btn';
-      deleteZoneBtn.textContent = '×';
-      deleteZoneBtn.addEventListener('click', () => {
-        delete zones[zoneId];
-        save();
+    if (isEditingZone) {
+      // 편집 모드
+      const titleInput = document.createElement('input');
+      titleInput.type = 'text';
+      titleInput.className = 'zone-title-input';
+      titleInput.value = zone.name || '';
+      titleInput.placeholder = zoneId === '0-0' ? 'Default' : `Zone ${zoneId}`;
+
+      titleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          zones[zoneId].name = titleInput.value;
+          editingZoneId = null;
+          save();
+          // 인라인으로 UI 업데이트
+          updateZoneHeader(header, zoneId, zone, x, y);
+        } else if (e.key === 'Escape') {
+          editingZoneId = null;
+          updateZoneHeader(header, zoneId, zone, x, y);
+        }
       });
-      header.appendChild(deleteZoneBtn);
+
+      titleInput.addEventListener('blur', () => {
+        if (editingZoneId === zoneId) {
+          zones[zoneId].name = titleInput.value;
+          editingZoneId = null;
+          save();
+          updateZoneHeader(header, zoneId, zone, x, y);
+        }
+      });
+
+      header.appendChild(titleInput);
+      setTimeout(() => titleInput.focus(), 0);
+
+    } else {
+      renderZoneHeaderContent(header, zoneId, zone, x, y);
     }
 
     zoneEl.appendChild(header);
@@ -193,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     zone.hotkeys.forEach((hotkey, index) => {
       const itemKey = `${zoneId}-${index}`;
-      const row = createHotkeyRow(zoneId, hotkey, index, itemKey);
+      const row = createHotkeyRow(zoneId, hotkey, index, itemKey, list);
       list.appendChild(row);
     });
 
@@ -223,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         zones[zoneId].hotkeys.push(item);
         draggedItem = null;
         save();
+        render();
       }
     });
 
@@ -234,10 +260,52 @@ document.addEventListener('DOMContentLoaded', () => {
       zones[zoneId].hotkeys.push({ key: '', url: '', description: '', matchKeyword: '' });
       editingKey = `${zoneId}-${zones[zoneId].hotkeys.length - 1}`;
       save();
+      render();
     });
     zoneEl.appendChild(addBtn);
 
     gridContainer.appendChild(zoneEl);
+  }
+
+  // 영역 헤더 내용 렌더링 (보기 모드)
+  function renderZoneHeaderContent(header, zoneId, zone, x, y) {
+    const titleWrapper = document.createElement('div');
+    titleWrapper.className = 'zone-title-wrapper';
+
+    const title = document.createElement('span');
+    title.className = 'zone-title';
+    title.textContent = zone.name || (zoneId === '0-0' ? 'Default' : `Zone ${zoneId}`);
+    titleWrapper.appendChild(title);
+
+    const editZoneBtn = document.createElement('button');
+    editZoneBtn.className = 'zone-edit-btn';
+    editZoneBtn.textContent = '✎';
+    editZoneBtn.addEventListener('click', () => {
+      editingZoneId = zoneId;
+      render();
+    });
+    titleWrapper.appendChild(editZoneBtn);
+
+    header.appendChild(titleWrapper);
+
+    // 영역 삭제 버튼
+    if (canDeleteZone(x, y)) {
+      const deleteZoneBtn = document.createElement('button');
+      deleteZoneBtn.className = 'zone-delete-btn';
+      deleteZoneBtn.textContent = '×';
+      deleteZoneBtn.addEventListener('click', () => {
+        delete zones[zoneId];
+        save();
+        render();
+      });
+      header.appendChild(deleteZoneBtn);
+    }
+  }
+
+  // 영역 헤더 인라인 업데이트
+  function updateZoneHeader(header, zoneId, zone, x, y) {
+    header.innerHTML = '';
+    renderZoneHeaderContent(header, zoneId, zone, x, y);
   }
 
   function renderExpandButton(zoneId, x, y) {
@@ -250,13 +318,14 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       zones[zoneId] = { name: '', hotkeys: [] };
       save();
+      render();
     });
 
     zoneEl.appendChild(btn);
     gridContainer.appendChild(zoneEl);
   }
 
-  function createHotkeyRow(zoneId, hotkey, index, itemKey) {
+  function createHotkeyRow(zoneId, hotkey, index, itemKey, listEl) {
     const row = document.createElement('div');
     row.className = 'hotkey-row';
 
@@ -287,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = normalizeKey(e.key, e.shiftKey);
         zones[zoneId].hotkeys[index].key = key;
         keyInput.value = key;
-        save();
+        save(); // 데이터만 저장, UI 갱신 없음
       });
 
       row.querySelector('.url-input').addEventListener('change', (e) => {
@@ -309,6 +378,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         editingKey = null;
         save();
+        // 해당 row만 교체
+        const newRow = createHotkeyRow(zoneId, hotkey, index, itemKey, listEl);
+        row.replaceWith(newRow);
       });
 
       row.querySelector('.delete-btn').addEventListener('mousedown', (e) => {
@@ -316,6 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         zones[zoneId].hotkeys.splice(index, 1);
         editingKey = null;
         save();
+        render();
       });
 
     } else {
@@ -380,13 +453,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           draggedItem = null;
           save();
+          render();
         }
       });
 
       row.querySelector('.edit-btn').addEventListener('click', () => {
         editingKey = itemKey;
         deletingKey = null;
-        render();
+        // 해당 row만 교체
+        const newRow = createHotkeyRow(zoneId, hotkey, index, itemKey, listEl);
+        row.replaceWith(newRow);
       });
 
       const deleteBtn = row.querySelector('.delete-btn');
@@ -396,12 +472,24 @@ document.addEventListener('DOMContentLoaded', () => {
           zones[zoneId].hotkeys.splice(index, 1);
           deletingKey = null;
           save();
+          render();
         });
       } else {
         deleteBtn.addEventListener('mousedown', (e) => {
           e.preventDefault();
           deletingKey = itemKey;
-          render();
+          // 해당 버튼만 교체
+          deleteBtn.textContent = 'ok?';
+          deleteBtn.classList.add('confirm');
+          // 이벤트 리스너 교체
+          deleteBtn.replaceWith(deleteBtn.cloneNode(true));
+          row.querySelector('.delete-btn').addEventListener('mousedown', (ev) => {
+            ev.preventDefault();
+            zones[zoneId].hotkeys.splice(index, 1);
+            deletingKey = null;
+            save();
+            render();
+          });
         });
       }
     }
