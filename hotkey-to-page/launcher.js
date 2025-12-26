@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
-    const key = normalizeKey(e.key, e.shiftKey);
+    const key = normalizeKey(e.code, e.key, e.shiftKey);
 
     // 모든 영역에서 매칭되는 단축키 찾기
     for (const zoneId of Object.keys(zones)) {
@@ -50,11 +50,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function normalizeKey(key, shiftKey) {
+  function normalizeKey(code, key, shiftKey) {
     let normalizedKey;
-    if (key === ' ') normalizedKey = 'Space';
-    else if (key.length === 1) normalizedKey = key.toUpperCase();
-    else normalizedKey = key;
+
+    // 물리적 키 코드에서 알파벳/숫자 추출 (입력기 상태 무관)
+    if (code.startsWith('Key')) {
+      normalizedKey = code.slice(3); // 'KeyB' → 'B'
+    } else if (code.startsWith('Digit')) {
+      normalizedKey = code.slice(5); // 'Digit1' → '1'
+    } else if (code === 'Space') {
+      normalizedKey = 'Space';
+    } else {
+      // 특수키는 기존 방식 유지
+      normalizedKey = key.length === 1 ? key.toUpperCase() : key;
+    }
 
     if (shiftKey && key !== 'Shift') {
       return 'Shift+' + normalizedKey;
@@ -353,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (e.key === 'Shift') return;
 
-        const key = normalizeKey(e.key, e.shiftKey);
+        const key = normalizeKey(e.code, e.key, e.shiftKey);
         zones[zoneId].hotkeys[index].key = key;
         keyInput.value = key;
         save(); // 데이터만 저장, UI 갱신 없음
