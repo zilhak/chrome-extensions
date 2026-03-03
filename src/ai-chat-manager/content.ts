@@ -1,6 +1,22 @@
+export {};
+
 const STYLE_ID = 'ai-chat-font-controller';
 
-const DEFAULT_SETTINGS = {
+interface FontSettings {
+  enabled: boolean;
+  chatWidth: number;
+  h1: number;
+  h2: number;
+  h3: number;
+  p: number;
+  li: number;
+  pre: number;
+  code: number;
+}
+
+type SiteType = 'chatgpt' | 'gemini' | 'unknown';
+
+const DEFAULT_SETTINGS: FontSettings = {
   enabled: true,
   chatWidth: 100,
   h1: 22,
@@ -13,7 +29,7 @@ const DEFAULT_SETTINGS = {
 };
 
 // 사이트 감지
-function getSiteType() {
+function getSiteType(): SiteType {
   const host = window.location.hostname;
   if (host.includes('chatgpt.com') || host.includes('chat.openai.com')) {
     return 'chatgpt';
@@ -41,7 +57,7 @@ const GEMINI_SELECTORS = [
   '.conversation-container'
 ].join(', ');
 
-function generateCSS(settings) {
+function generateCSS(settings: FontSettings): string {
   if (!settings.enabled) {
     return '';
   }
@@ -129,7 +145,7 @@ function generateCSS(settings) {
   `;
 }
 
-function applyStyles(settings) {
+function applyStyles(settings: FontSettings): void {
   let styleEl = document.getElementById(STYLE_ID);
 
   if (!settings.enabled) {
@@ -150,7 +166,7 @@ function applyStyles(settings) {
 
 // 초기 로드
 chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
-  applyStyles(settings);
+  applyStyles(settings as FontSettings);
 });
 
 // 설정 변경 감지
@@ -158,6 +174,6 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName !== 'sync') return;
 
   chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
-    applyStyles(settings);
+    applyStyles(settings as FontSettings);
   });
 });

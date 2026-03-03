@@ -1,0 +1,17 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "chrome-extensions",
+      "devDependencies": {
+        "chrome-types": "^0.1.327",
+        "typescript": "^5.7.0",
+      },
+    },
+  },
+  "packages": {
+    "chrome-types": ["chrome-types@0.1.420", "", {}, "sha512-7tMfTdMzk4j7CrICU0+Vzxf9o65u4b7hhc2FPfZ3aC4fiDPZ9QpPO4XqQZBY87vtKIStlJGBWf2O2KoLmof/2g=="],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+  }
+}

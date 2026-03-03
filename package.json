@@ -1,0 +1,13 @@
+{
+  "name": "chrome-extensions",
+  "private": true,
+  "scripts": {
+    "build": "bun run build.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "chrome-types": "^0.1.327"
+  }
+}

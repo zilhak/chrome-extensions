@@ -1,17 +1,36 @@
+interface HotkeyItem {
+  key: string;
+  url: string;
+  matchKeyword: string;
+  description: string;
+}
+
+interface Zone {
+  name: string;
+  hotkeys: HotkeyItem[];
+}
+
+type ZoneMap = Record<string, Zone>;
+
+interface DraggedItem {
+  zoneId: string;
+  index: number;
+}
+
 // 상태 변수
-let zones = {}; // { "0-0": { name: "Default", hotkeys: [...] }, ... }
-let editingKey = null; // "zoneId-index" 형태
-let deletingKey = null;
-let draggedItem = null; // { zoneId, index }
-let editingZoneId = null; // 영역 이름 편집 중
+let zones: ZoneMap = {};
+let editingKey: string | null = null; // "zoneId-index" 형태
+let deletingKey: string | null = null;
+let draggedItem: DraggedItem | null = null;
+let editingZoneId: string | null = null; // 영역 이름 편집 중
 
 // URL 파라미터에서 모드 및 이전 URL 읽기
 const urlParams = new URLSearchParams(window.location.search);
 const launcherMode = urlParams.get('mode') || 'new';
-const prevUrl = urlParams.get('prevUrl') ? decodeURIComponent(urlParams.get('prevUrl')) : '';
+const prevUrl = urlParams.get('prevUrl') ? decodeURIComponent(urlParams.get('prevUrl')!) : '';
 
 document.addEventListener('DOMContentLoaded', () => {
-  const gridContainer = document.getElementById('grid-container');
+  const gridContainer = document.getElementById('grid-container')!;
 
   // 설정 로드 (마이그레이션 포함)
   chrome.storage.sync.get({ zones: null, hotkeys: null }, (result) => {
@@ -29,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 전역 키 이벤트 (런처 모드)
   document.addEventListener('keydown', (e) => {
-    if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
 
     const key = normalizeKey(e.code, e.key, e.shiftKey);
 
@@ -50,8 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  function normalizeKey(code, key, shiftKey) {
-    let normalizedKey;
+  function normalizeKey(code: string, key: string, shiftKey: boolean): string {
+    let normalizedKey: string;
 
     // 물리적 키 코드에서 알파벳/숫자 추출 (입력기 상태 무관)
     if (code.startsWith('Key')) {
@@ -72,12 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 데이터만 저장 (UI 갱신 없음)
-  function save() {
+  function save(): void {
     chrome.storage.sync.set({ zones });
   }
 
   // 영역이 활성화 가능한지 체크 (인접 영역 존재 여부)
-  function canActivateZone(x, y) {
+  function canActivateZone(x: number, y: number): boolean {
     if (x === 0 && y === 0) return true;
     if (x < 0 || y < 0 || x > 2 || y > 2) return false;
 
@@ -90,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 영역 삭제 가능 여부 (의존하는 영역이 없어야 함)
-  function canDeleteZone(x, y) {
+  function canDeleteZone(x: number, y: number): boolean {
     if (x === 0 && y === 0) return false; // Default는 삭제 불가
 
     // 이 영역에 의존하는 활성 영역이 있는지 확인
@@ -101,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return !dependents.some(id => zones[id]);
   }
 
-  function render() {
+  function render(): void {
     gridContainer.innerHTML = '';
 
     // 그리드 크기 계산 (활성 영역 기준)
@@ -117,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gridHeight = Math.min(maxY + 2, 3);
 
     // 그리드 템플릿 설정 (활성 영역은 1fr, 확장 영역은 20px)
-    const colSizes = [];
+    const colSizes: string[] = [];
     for (let x = 0; x < gridWidth; x++) {
       // 이 열에 활성 영역이 있는지 확인
       let hasActiveInCol = false;
@@ -130,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
       colSizes.push(hasActiveInCol ? '1fr' : '20px');
     }
 
-    const rowSizes = [];
+    const rowSizes: string[] = [];
     for (let y = 0; y < gridHeight; y++) {
       // 이 행에 활성 영역이 있는지 확인
       let hasActiveInRow = false;
@@ -157,13 +176,13 @@ document.addEventListener('DOMContentLoaded', () => {
           renderActiveZone(zoneId, zone, x, y);
         } else if (canActivateZone(x, y)) {
           // 확장 가능 영역
-          renderExpandButton(zoneId, x, y);
+          renderExpandButton(zoneId);
         }
       }
     }
   }
 
-  function renderActiveZone(zoneId, zone, x, y) {
+  function renderActiveZone(zoneId: string, zone: Zone, x: number, y: number): void {
     const zoneEl = document.createElement('div');
     zoneEl.className = 'zone active';
     zoneEl.dataset.zoneId = zoneId;
@@ -242,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     zoneEl.addEventListener('dragleave', (e) => {
-      if (!zoneEl.contains(e.relatedTarget)) {
+      if (!zoneEl.contains(e.relatedTarget as Node)) {
         zoneEl.classList.remove('zone-drop-target');
       }
     });
@@ -277,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 영역 헤더 내용 렌더링 (보기 모드)
-  function renderZoneHeaderContent(header, zoneId, zone, x, y) {
+  function renderZoneHeaderContent(header: HTMLElement, zoneId: string, zone: Zone, x: number, y: number): void {
     const titleWrapper = document.createElement('div');
     titleWrapper.className = 'zone-title-wrapper';
 
@@ -312,12 +331,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 영역 헤더 인라인 업데이트
-  function updateZoneHeader(header, zoneId, zone, x, y) {
+  function updateZoneHeader(header: HTMLElement, zoneId: string, zone: Zone, x: number, y: number): void {
     header.innerHTML = '';
     renderZoneHeaderContent(header, zoneId, zone, x, y);
   }
 
-  function renderExpandButton(zoneId, x, y) {
+  function renderExpandButton(zoneId: string): void {
     const zoneEl = document.createElement('div');
     zoneEl.className = 'zone expandable';
 
@@ -334,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gridContainer.appendChild(zoneEl);
   }
 
-  function createHotkeyRow(zoneId, hotkey, index, itemKey, listEl) {
+  function createHotkeyRow(zoneId: string, hotkey: HotkeyItem, index: number, itemKey: string, listEl: HTMLElement): HTMLDivElement {
     const row = document.createElement('div');
     row.className = 'hotkey-row';
 
@@ -353,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <button class="delete-btn">×</button>
       `;
 
-      const keyInput = row.querySelector('.key-input');
+      const keyInput = row.querySelector('.key-input') as HTMLInputElement;
       keyInput.addEventListener('keydown', (e) => {
         e.preventDefault();
         if (['Tab', 'Escape'].includes(e.key)) {
@@ -368,22 +387,22 @@ document.addEventListener('DOMContentLoaded', () => {
         save(); // 데이터만 저장, UI 갱신 없음
       });
 
-      row.querySelector('.url-input').addEventListener('change', (e) => {
-        zones[zoneId].hotkeys[index].url = e.target.value;
+      (row.querySelector('.url-input') as HTMLInputElement).addEventListener('change', (e) => {
+        zones[zoneId].hotkeys[index].url = (e.target as HTMLInputElement).value;
         save();
       });
 
-      row.querySelector('.match-input').addEventListener('change', (e) => {
-        zones[zoneId].hotkeys[index].matchKeyword = e.target.value;
+      (row.querySelector('.match-input') as HTMLInputElement).addEventListener('change', (e) => {
+        zones[zoneId].hotkeys[index].matchKeyword = (e.target as HTMLInputElement).value;
         save();
       });
 
-      row.querySelector('.desc-input').addEventListener('change', (e) => {
-        zones[zoneId].hotkeys[index].description = e.target.value;
+      (row.querySelector('.desc-input') as HTMLInputElement).addEventListener('change', (e) => {
+        zones[zoneId].hotkeys[index].description = (e.target as HTMLInputElement).value;
         save();
       });
 
-      row.querySelector('.done-btn').addEventListener('mousedown', (e) => {
+      row.querySelector('.done-btn')!.addEventListener('mousedown', (e) => {
         e.preventDefault();
         editingKey = null;
         save();
@@ -392,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         row.replaceWith(newRow);
       });
 
-      row.querySelector('.delete-btn').addEventListener('mousedown', (e) => {
+      row.querySelector('.delete-btn')!.addEventListener('mousedown', (e) => {
         e.preventDefault();
         zones[zoneId].hotkeys.splice(index, 1);
         editingKey = null;
@@ -404,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 보기 모드
       row.draggable = true;
       row.dataset.zoneId = zoneId;
-      row.dataset.index = index;
+      row.dataset.index = String(index);
 
       const displayText = hotkey.description || hotkey.url || '(미설정)';
       const hasMatch = hotkey.matchKeyword ? ' 🔗' : '';
@@ -422,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
       row.addEventListener('dragstart', (e) => {
         draggedItem = { zoneId, index };
         row.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer!.effectAllowed = 'move';
       });
 
       row.addEventListener('dragend', () => {
@@ -466,7 +485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      row.querySelector('.edit-btn').addEventListener('click', () => {
+      row.querySelector('.edit-btn')!.addEventListener('click', () => {
         editingKey = itemKey;
         deletingKey = null;
         // 해당 row만 교체
@@ -474,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
         row.replaceWith(newRow);
       });
 
-      const deleteBtn = row.querySelector('.delete-btn');
+      const deleteBtn = row.querySelector('.delete-btn')!;
       if (isDeleting) {
         deleteBtn.addEventListener('mousedown', (e) => {
           e.preventDefault();
@@ -492,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
           deleteBtn.classList.add('confirm');
           // 이벤트 리스너 교체
           deleteBtn.replaceWith(deleteBtn.cloneNode(true));
-          row.querySelector('.delete-btn').addEventListener('mousedown', (ev) => {
+          row.querySelector('.delete-btn')!.addEventListener('mousedown', (ev) => {
             ev.preventDefault();
             zones[zoneId].hotkeys.splice(index, 1);
             deletingKey = null;
@@ -506,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return row;
   }
 
-  function escapeHtml(str) {
+  function escapeHtml(str: string): string {
     if (!str) return '';
     return str.replace(/&/g, '&amp;')
               .replace(/</g, '&lt;')

@@ -1,4 +1,23 @@
-const PRESETS = {
+export {};
+
+interface FontSizes {
+  h1: number;
+  h2: number;
+  h3: number;
+  p: number;
+  li: number;
+  pre: number;
+  code: number;
+}
+
+interface FontSettings extends FontSizes {
+  enabled: boolean;
+  chatWidth: number;
+}
+
+type PresetName = 'xsmall' | 'small' | 'large';
+
+const PRESETS: Record<PresetName, FontSizes> = {
   xsmall: {
     h1: 18,
     h2: 15,
@@ -28,36 +47,38 @@ const PRESETS = {
   }
 };
 
-const DEFAULT_SETTINGS = {
+const DEFAULT_SETTINGS: FontSettings = {
   enabled: true,
   chatWidth: 100,
   ...PRESETS.small
 };
-const TAGS = ['h1', 'h2', 'h3', 'p', 'li', 'pre', 'code'];
+type FontTag = keyof FontSizes;
+const TAGS: readonly FontTag[] = ['h1', 'h2', 'h3', 'p', 'li', 'pre', 'code'];
 
 document.addEventListener('DOMContentLoaded', () => {
-  const enabledToggle = document.getElementById('enabled');
-  const controls = document.getElementById('controls');
-  const disabledMessage = document.getElementById('disabled-message');
-  const applyBtn = document.getElementById('apply');
+  const enabledToggle = document.getElementById('enabled') as HTMLInputElement;
+  const controls = document.getElementById('controls')!;
+  const disabledMessage = document.getElementById('disabled-message')!;
+  const applyBtn = document.getElementById('apply')!;
 
   // 프리셋 버튼
-  const presetXSmall = document.getElementById('preset-xsmall');
-  const presetSmall = document.getElementById('preset-small');
-  const presetLarge = document.getElementById('preset-large');
+  const presetXSmall = document.getElementById('preset-xsmall')!;
+  const presetSmall = document.getElementById('preset-small')!;
+  const presetLarge = document.getElementById('preset-large')!;
 
   // 너비 슬라이더
-  const widthSlider = document.getElementById('chatWidth');
-  const widthValue = document.getElementById('width-value');
+  const widthSlider = document.getElementById('chatWidth') as HTMLInputElement;
+  const widthValue = document.getElementById('width-value')!;
 
   // 저장된 설정 불러오기
-  chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
+  chrome.storage.sync.get(DEFAULT_SETTINGS, (result) => {
+    const settings = result as FontSettings;
     enabledToggle.checked = settings.enabled;
     updateControlsVisibility(settings.enabled);
     updateSliders(settings);
 
     // 너비 설정
-    widthSlider.value = settings.chatWidth || 100;
+    widthSlider.value = String(settings.chatWidth || 100);
     widthValue.textContent = `${settings.chatWidth || 100}%`;
   });
 
@@ -66,7 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const enabled = enabledToggle.checked;
     updateControlsVisibility(enabled);
 
-    chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
+    chrome.storage.sync.get(DEFAULT_SETTINGS, (result) => {
+      const settings = result as FontSettings;
       settings.enabled = enabled;
       chrome.storage.sync.set(settings);
     });
@@ -74,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 슬라이더 input 이벤트 (UI만 업데이트, 저장 안함)
   TAGS.forEach((tag) => {
-    const slider = document.getElementById(tag);
-    const valueDisplay = document.getElementById(`${tag}-value`);
+    const slider = document.getElementById(tag) as HTMLInputElement;
+    const valueDisplay = document.getElementById(`${tag}-value`)!;
 
     slider.addEventListener('input', () => {
       valueDisplay.textContent = `${slider.value}px`;
@@ -88,7 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   widthSlider.addEventListener('change', () => {
-    chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
+    chrome.storage.sync.get(DEFAULT_SETTINGS, (result) => {
+      const settings = result as FontSettings;
       settings.chatWidth = parseInt(widthSlider.value, 10);
       chrome.storage.sync.set(settings);
     });
@@ -96,12 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 적용 버튼 (글자 크기만)
   applyBtn.addEventListener('click', () => {
-    const settings = {
+    const settings: Record<string, number | boolean> = {
       enabled: enabledToggle.checked,
       chatWidth: parseInt(widthSlider.value, 10)
     };
     TAGS.forEach((tag) => {
-      settings[tag] = parseInt(document.getElementById(tag).value, 10);
+      settings[tag] = parseInt((document.getElementById(tag) as HTMLInputElement).value, 10);
     });
     chrome.storage.sync.set(settings);
   });
@@ -111,22 +134,22 @@ document.addEventListener('DOMContentLoaded', () => {
   presetSmall.addEventListener('click', () => applyPreset('small'));
   presetLarge.addEventListener('click', () => applyPreset('large'));
 
-  function applyPreset(name) {
+  function applyPreset(name: PresetName): void {
     const preset = { ...PRESETS[name], enabled: enabledToggle.checked };
     chrome.storage.sync.set(preset);
-    updateSliders(preset);
+    updateSliders(preset as FontSettings);
   }
 
-  function updateSliders(settings) {
+  function updateSliders(settings: FontSettings): void {
     TAGS.forEach((tag) => {
-      const slider = document.getElementById(tag);
-      const valueDisplay = document.getElementById(`${tag}-value`);
-      slider.value = settings[tag];
+      const slider = document.getElementById(tag) as HTMLInputElement;
+      const valueDisplay = document.getElementById(`${tag}-value`)!;
+      slider.value = String(settings[tag]);
       valueDisplay.textContent = `${settings[tag]}px`;
     });
   }
 
-  function updateControlsVisibility(enabled) {
+  function updateControlsVisibility(enabled: boolean): void {
     if (enabled) {
       controls.classList.remove('disabled');
       disabledMessage.classList.remove('show');
