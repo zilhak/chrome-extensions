@@ -404,6 +404,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       row.querySelector('.done-btn')!.addEventListener('mousedown', (e) => {
         e.preventDefault();
+        // blur 전에 done을 누르면 change가 안 발생하므로 직접 반영
+        zones[zoneId].hotkeys[index].url = (row.querySelector('.url-input') as HTMLInputElement).value;
+        zones[zoneId].hotkeys[index].matchKeyword = (row.querySelector('.match-input') as HTMLInputElement).value;
+        zones[zoneId].hotkeys[index].description = (row.querySelector('.desc-input') as HTMLInputElement).value;
         editingKey = null;
         save();
         // 해당 row만 교체
