@@ -27,6 +27,7 @@ interface HarEntry {
   request: HarRequest;
   response: HarResponse;
   _resourceType: string;
+  startedDateTime?: string;
   getContent: (callback: (body: string) => void) => void;
 }
 
@@ -36,6 +37,19 @@ interface HarEntry {
   let activeTypeFilter: FilterType = 'all';
   let filterText = '';
 
+  // ===== Recording settings =====
+  const recordSettings = {
+    methods: new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']),
+    types: new Set(['api', 'doc', 'js', 'css', 'img', 'other']),
+  };
+
+  // ===== Dedup for HAR recovery =====
+  const capturedKeys = new Set<string>();
+  function entryKey(e: { request: { method: string; url: string }; startedDateTime?: string }): string {
+    return `${e.startedDateTime || ''}|${e.request.method}|${e.request.url}`;
+  }
+
+  // ===== DOM refs =====
   const requestList = document.getElementById('request-list')!;
   const contextMenu = document.getElementById('context-menu')!;
   const toast = document.getElementById('toast')!;
@@ -43,6 +57,8 @@ interface HarEntry {
   const clearBtn = document.getElementById('clear-btn')!;
   const filterInput = document.getElementById('filter-input') as HTMLInputElement;
   const typeButtons = document.querySelectorAll<HTMLButtonElement>('.type-btn');
+  const settingsBtn = document.getElementById('settings-btn')!;
+  const settingsModal = document.getElementById('settings-modal')!;
 
   // ===== Type mapping =====
   const TYPE_MAP: Record<string, string[]> = {
@@ -54,12 +70,19 @@ interface HarEntry {
   };
 
   function getTypeCategory(resourceType: string): string | null {
-    if (resourceType === 'websocket') return null; // filtered out
+    if (resourceType === 'websocket') return null;
     for (const [cat, types] of Object.entries(TYPE_MAP)) {
       if (types.includes(resourceType)) return cat;
     }
     return 'other';
   }
+
+  // ===== Seed capturedKeys with existing HAR entries =====
+  chrome.devtools.network.getHAR((harLog: any) => {
+    for (const raw of harLog.entries || []) {
+      capturedKeys.add(entryKey(raw));
+    }
+  });
 
   // ===== Network listener =====
   chrome.devtools.network.onRequestFinished.addListener((entry) => {
@@ -68,10 +91,69 @@ interface HarEntry {
     if (type === 'websocket') return;
     if (harEntry.request.url.startsWith('data:')) return;
 
+    // Method filter — don't record at all (known at request time)
+    if (!recordSettings.methods.has(harEntry.request.method.toUpperCase())) return;
+
+    // Type filter — don't add to list (known after receiving)
+    const category = getTypeCategory(type);
+    if (category && !recordSettings.types.has(category)) return;
+
+    capturedKeys.add(entryKey(harEntry));
     const index = requests.length;
     requests.push(harEntry);
     renderRow(harEntry, index);
     updateCount();
+  });
+
+  // ===== HAR recovery after page navigation =====
+  function recoverMissedRequests(): void {
+    chrome.devtools.network.getHAR((harLog: any) => {
+      const entries = harLog.entries || [];
+      let added = false;
+      for (const raw of entries) {
+        const key = entryKey(raw);
+        if (capturedKeys.has(key)) continue;
+
+        const type = raw._resourceType || 'other';
+        if (type === 'websocket') { capturedKeys.add(key); continue; }
+        if (raw.request.url.startsWith('data:')) { capturedKeys.add(key); continue; }
+
+        // Method filter
+        if (!recordSettings.methods.has(raw.request.method.toUpperCase())) {
+          capturedKeys.add(key);
+          continue;
+        }
+
+        // Type filter
+        const category = getTypeCategory(type);
+        if (category && !recordSettings.types.has(category)) {
+          capturedKeys.add(key);
+          continue;
+        }
+
+        // Create HarEntry with synthetic getContent
+        const responseText = raw.response?.content?.text || '';
+        const harEntry: HarEntry = {
+          request: raw.request,
+          response: raw.response,
+          _resourceType: type,
+          startedDateTime: raw.startedDateTime,
+          getContent: (cb) => cb(responseText),
+        };
+
+        capturedKeys.add(key);
+        const index = requests.length;
+        requests.push(harEntry);
+        renderRow(harEntry, index);
+        added = true;
+      }
+      if (added) updateCount();
+    });
+  }
+
+  chrome.devtools.network.onNavigated.addListener(() => {
+    setTimeout(recoverMissedRequests, 500);
+    setTimeout(recoverMissedRequests, 2000);
   });
 
   // ===== Render =====
@@ -160,6 +242,41 @@ interface HarEntry {
     requests.length = 0;
     requestList.innerHTML = '';
     updateCount();
+  });
+
+  // ===== Settings modal =====
+  function updateSettingsIndicator(): void {
+    const allMethods = recordSettings.methods.size === 7;
+    const allTypes = recordSettings.types.size === 6;
+    settingsBtn.classList.toggle('has-filter', !allMethods || !allTypes);
+  }
+
+  settingsBtn.addEventListener('click', () => {
+    settingsModal.classList.remove('hidden');
+  });
+
+  settingsModal.querySelector('.modal-backdrop')!.addEventListener('click', () => {
+    settingsModal.classList.add('hidden');
+  });
+
+  settingsModal.querySelector('.modal-close')!.addEventListener('click', () => {
+    settingsModal.classList.add('hidden');
+  });
+
+  settingsModal.querySelectorAll<HTMLInputElement>('#method-checks input').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) recordSettings.methods.add(cb.value);
+      else recordSettings.methods.delete(cb.value);
+      updateSettingsIndicator();
+    });
+  });
+
+  settingsModal.querySelectorAll<HTMLInputElement>('#type-checks input').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) recordSettings.types.add(cb.value);
+      else recordSettings.types.delete(cb.value);
+      updateSettingsIndicator();
+    });
   });
 
   // ===== Context menu =====

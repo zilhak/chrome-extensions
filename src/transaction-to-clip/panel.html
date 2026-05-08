@@ -19,6 +19,7 @@
     <span id="count">0 requests</span>
   </div>
   <div id="filter-bar">
+    <button id="settings-btn" title="Recording Settings">&#9881;</button>
     <input id="filter-input" type="text" placeholder="Filter URLs...">
   </div>
   <div id="request-list"></div>
@@ -39,6 +40,43 @@
         <div class="submenu-item" data-mode="full">
           <span class="label">Full</span>
           <span class="desc">everything, no omission</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Recording Settings</span>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <div class="setting-title">HTTP Methods</div>
+          <div class="setting-hint">체크 해제 시 해당 메서드는 녹화하지 않음</div>
+          <div class="checkbox-group" id="method-checks">
+            <label><input type="checkbox" value="GET" checked> GET</label>
+            <label><input type="checkbox" value="POST" checked> POST</label>
+            <label><input type="checkbox" value="PUT" checked> PUT</label>
+            <label><input type="checkbox" value="PATCH" checked> PATCH</label>
+            <label><input type="checkbox" value="DELETE" checked> DELETE</label>
+            <label><input type="checkbox" value="OPTIONS" checked> OPTIONS</label>
+            <label><input type="checkbox" value="HEAD" checked> HEAD</label>
+          </div>
+        </div>
+        <div class="setting-group">
+          <div class="setting-title">Resource Types</div>
+          <div class="setting-hint">체크 해제 시 해당 타입은 목록에 추가하지 않음</div>
+          <div class="checkbox-group" id="type-checks">
+            <label><input type="checkbox" value="api" checked> API</label>
+            <label><input type="checkbox" value="doc" checked> Doc</label>
+            <label><input type="checkbox" value="js" checked> JS</label>
+            <label><input type="checkbox" value="css" checked> CSS</label>
+            <label><input type="checkbox" value="img" checked> Img</label>
+            <label><input type="checkbox" value="other" checked> Other</label>
+          </div>
         </div>
       </div>
     </div>
