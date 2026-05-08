@@ -40,4 +40,4 @@ coverage/
 
 # Claude Code
 .claude/
-CLAUDE.md
+.claude-workspace/
